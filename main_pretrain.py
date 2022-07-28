@@ -183,9 +183,13 @@ def main(args):
 
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
 
+    mask = [0., 0.3, 0.5, 0.7, 0.9]
+
+
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
+        args.mask_ratio = mask[epoch // 160] ## change masking ratio every 20% of total epoch
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
