@@ -29,15 +29,14 @@ def parse_args():
     parser.add_argument('--comment', default="", type=str, help="Comment to pass to scheduler")
     return parser.parse_args()
 
-
 def get_shared_folder() -> Path:
     user = os.getenv("USER")
-    if Path("/checkpoint/").is_dir():
-        p = Path(f"/checkpoint/{user}/experiments")
+    cur_file_path = Path("checkpoint").absolute()
+    if Path("checkpoint/").is_dir():
+        p = Path(f"{cur_file_path}/{user}/experiments")
         p.mkdir(exist_ok=True)
         return p
     raise RuntimeError("No shared folder available")
-
 
 def get_init_file():
     # Init file must not exist, but it's parent dir must exist.
