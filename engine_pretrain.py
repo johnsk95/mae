@@ -74,10 +74,10 @@ def train_one_epoch(model: torch.nn.Module,
             epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
-            log_writer.add_scalar('mask_ratio', args.mask_ratio) # added masking ratio to tensorboard
+            log_writer.add_scalar('mask_ratio', args.mask_ratio, epoch_1000x) # added masking ratio to tensorboard
 
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
-    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}, loss_value_reduce

@@ -183,22 +183,29 @@ def main(args):
 
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
 
-    mask = [0.3, 0.5, 0.7, 0.8, 0.9, 0.9]
-
-
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
-        args.mask_ratio = mask[epoch // 20] ## change masking ratio every 20% of total epoch
+        #args.mask_ratio = mask[epoch // 20] ## change masking ratio every 20% of total epoch
+        #if epoch > 30:
+        #    args.mask_ratio = 0.7
+        #else:
+        #    args.mask_ratio = 0.3
+        
         if args.distributed:
             data_loader_train.sampler.set_epoch(epoch)
-        train_stats = train_one_epoch(
+        train_stats, loss_value = train_one_epoch(
             model, data_loader_train,
             optimizer, device, epoch, loss_scaler,
             log_writer=log_writer,
             args=args
         )
-        if args.output_dir and (epoch % 20 == 0 or epoch + 1 == args.epochs):
+
+        # apply curriculum based on fixed loss threshold
+        if loss_value < 0.3 and args.mask_ratio < 0.8:
+            args.mask_ratio += 0.05            
+
+        if args.output_dir and (epoch % 50 == 0 or epoch + 1 == args.epochs):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch)
