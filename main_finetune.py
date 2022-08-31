@@ -20,6 +20,7 @@ from pathlib import Path
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
+import torch.nn as nn
 
 import timm
 
@@ -254,6 +255,7 @@ def main(args):
             assert set(msg.missing_keys) == {'head.weight', 'head.bias'}
 
         # manually initialize fc layer
+        # model.head = nn.Linear(768, 10) # added for further fine-tuning
         trunc_normal_(model.head.weight, std=2e-5)
 
     model.to(device)
@@ -297,7 +299,10 @@ def main(args):
 
     print("criterion = %s" % str(criterion))
 
+
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
+    # model.head = nn.Linear(768, 200) # added for further fine-tuning
+    # trunc_normal_(model.head.weight, std=2e-5)
 
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device)
@@ -317,7 +322,7 @@ def main(args):
             log_writer=log_writer,
             args=args
         )
-        if args.output_dir:
+        if args.output_dir and (epoch % 10 == 0):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch)
